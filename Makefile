@@ -4,3 +4,4 @@ all: run
 
 run:
 	go run src/*.go
+

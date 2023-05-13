@@ -15,4 +15,5 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Commands
 	commands.HandlePing(s, m, prefix)
+	commands.HandleDiagram(s, m, prefix)
 }
