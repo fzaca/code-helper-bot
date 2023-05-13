@@ -1,6 +1,9 @@
 package main
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"github.com/Xukay101/code-helper-bot/src/commands"
+	"github.com/bwmarrin/discordgo"
+)
 
 var prefix = loadConfig().botPrefix
 
@@ -10,8 +13,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	// If the message is "ping" reply with "Pong!"
-	if m.Content == prefix+"ping" {
-		s.ChannelMessageSend(m.ChannelID, "Pong!")
-	}
+	// Commands
+	commands.HandlePing(s, m, prefix)
 }

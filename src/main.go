@@ -14,7 +14,7 @@ import (
 func main() {
 	// Load enviroment variables
 	err := godotenv.Load()
-	utils.PrintError("Error loading .env file", err)
+	utils.FatalOnError("Error loading .env file", err)
 
 	// Load config
 	config := loadConfig()
@@ -25,7 +25,7 @@ func main() {
 	bot.Identify.Intents = discordgo.IntentsGuildMessages
 
 	err = bot.Open()
-	utils.PrintError("Error opening connection", err)
+	utils.FatalOnError("Error opening connection", err)
 
 	// Signal for interrup
 	fmt.Println("Bot is now running.  Press CTRL-C to exit.")
@@ -39,6 +39,6 @@ func main() {
 
 func startBot(token string) *discordgo.Session {
 	bot, err := discordgo.New("Bot " + token)
-	utils.PrintError("Error creating Discord session", err)
+	utils.FatalOnError("Error creating Discord session", err)
 	return bot
 }
