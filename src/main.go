@@ -17,10 +17,10 @@ func main() {
 	utils.FatalOnError("Error loading .env file", err)
 
 	// Load config
-	config := loadConfig()
+	config := GetConfig()
 
 	// Init bot
-	bot := startBot(config.botToken)
+	bot := startBot(config.Bot.Token)
 	bot.AddHandler(messageCreate)
 	bot.Identify.Intents = discordgo.IntentsGuildMessages
 
