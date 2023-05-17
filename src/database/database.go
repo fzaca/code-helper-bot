@@ -5,24 +5,25 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/Xukay101/code-helper-bot/src/config"
 	"github.com/Xukay101/code-helper-bot/src/utils"
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func getDb() (*sql.DB, error) {
+func GetDb() (*sql.DB, error) {
 	connString := fmt.Sprintf(
-		"%s:%s@tcp(%s:%s)/%s?parseData=True",
-		GetConfig().Database.User,
-		GetConfig().Database.Password,
-		GetConfig().Database.Host,
-		GetConfig().Database.Port,
-		GetConfig().Database.Name,
+		"%s:%s@tcp(%s:%s)/%s?parseTime=True",
+		config.GetConfig().Database.User,
+		config.GetConfig().Database.Password,
+		config.GetConfig().Database.Host,
+		config.GetConfig().Database.Port,
+		config.GetConfig().Database.Name,
 	)
 
 	conn, err := sql.Open("mysql", connString)
 	utils.FatalOnError("Error getting database", err)
 
-	err = db.Ping()
+	err = conn.Ping()
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +32,7 @@ func getDb() (*sql.DB, error) {
 }
 
 func initDb() {
-	conn, err := getDb()
+	conn, err := GetDb()
 	utils.FatalOnError("Error trying to initialize database", err)
 	defer conn.Close()
 

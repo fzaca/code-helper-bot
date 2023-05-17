@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/Xukay101/code-helper-bot/src/config"
 	"github.com/Xukay101/code-helper-bot/src/utils"
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
@@ -17,7 +18,7 @@ func main() {
 	utils.FatalOnError("Error loading .env file", err)
 
 	// Load config
-	config := GetConfig()
+	config := config.GetConfig()
 
 	// Init bot
 	bot := startBot(config.Bot.Token)

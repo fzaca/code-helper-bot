@@ -2,10 +2,11 @@ package main
 
 import (
 	"github.com/Xukay101/code-helper-bot/src/commands"
+	"github.com/Xukay101/code-helper-bot/src/config"
 	"github.com/bwmarrin/discordgo"
 )
 
-var prefix = GetConfig().Bot.Prefix
+var prefix = config.GetConfig().Bot.Prefix
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
