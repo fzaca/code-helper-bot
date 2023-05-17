@@ -29,20 +29,22 @@ func HandleDiagram(s *discordgo.Session, m *discordgo.MessageCreate, prefix stri
 	args := strings.Split(m.Content, " ")
 
 	// Check if the message is a valid diagram command
-	if len(args) > 1 && args[0] == prefix+"diagram" {
-		if len(args) >= 2 {
-			// Handle -txt command
-			if args[1] == "-txt" {
-				handleDiagramTxt(s, m)
-				return
+	if args[0] == prefix+"diagram" {
+		if len(args) > 1 {
+			if len(args) >= 2 {
+				// Handle -txt command
+				if args[1] == "-txt" {
+					handleDiagramTxt(s, m)
+					return
+				}
 			}
-		}
 
-		// Handle inline diagram command
-		handleInlineDiagram(s, m)
-		return
-	} else {
-		s.ChannelMessageSend(m.ChannelID, rules)
+			// Handle inline diagram command
+			handleInlineDiagram(s, m)
+			return
+		} else {
+			s.ChannelMessageSend(m.ChannelID, rules)
+		}
 	}
 }
 
