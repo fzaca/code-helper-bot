@@ -8,13 +8,12 @@ import (
 
 	"github.com/Xukay101/code-helper-bot/src/utils"
 	"github.com/bwmarrin/discordgo"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	// Load enviroment variables
-	err := godotenv.Load()
-	utils.FatalOnError("Error loading .env file", err)
+	// // Load enviroment variables
+	// err := godotenv.Load()
+	// utils.FatalOnError("Error loading .env file", err)
 
 	// Load config
 	config := GetConfig()

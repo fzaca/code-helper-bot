@@ -9,6 +9,7 @@ require (
 
 require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
+	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/ilyakaznacheev/cleanenv v1.4.2 // indirect
 	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b // indirect
