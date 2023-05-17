@@ -1,8 +1,16 @@
 package database
 
 var instructions = []string{
-	// This is example
-	// "CREATE TABLE IF NOT EXISTS table1 (id INT PRIMARY KEY, name VARCHAR(255))",
-	// "CREATE TABLE IF NOT EXISTS table2 (id INT PRIMARY KEY, age INT)",
-	// Next intructions
+	"SET FOREIGN_KEY_CHECKS=0;",
+	"DROP TABLE IF EXISTS todo;",
+	"SET FOREIGN_KEY_CHECKS=1;",
+	`
+	CREATE TABLE tasks (
+		id INT PRIMARY KEY AUTO_INCREMENT,
+		created_by INT NOT NULL,
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		description TEXT NOT NULL,
+		completed BOOLEAN NOT NULL
+    );
+	`,
 }
