@@ -1,16 +1,16 @@
 package database
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/Xukay101/code-helper-bot/src/config"
 	"github.com/Xukay101/code-helper-bot/src/utils"
-	_ "github.com/go-sql-driver/mysql"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
-func GetDb() (*sql.DB, error) {
-	connString := fmt.Sprintf(
+func GetDb() *gorm.DB {
+	dsn := fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/%s?parseTime=True",
 		config.GetConfig().Database.User,
 		config.GetConfig().Database.Password,
@@ -19,13 +19,8 @@ func GetDb() (*sql.DB, error) {
 		config.GetConfig().Database.Name,
 	)
 
-	conn, err := sql.Open("mysql", connString)
+	conn, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	utils.FatalOnError("Error getting database", err)
 
-	err = conn.Ping()
-	if err != nil {
-		return nil, err
-	}
-
-	return conn, nil
+	return conn
 }

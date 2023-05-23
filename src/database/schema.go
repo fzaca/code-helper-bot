@@ -6,7 +6,8 @@ var instructions = []string{
 	"SET FOREIGN_KEY_CHECKS=1;",
 	`
 	CREATE TABLE tasks (
-		id INT PRIMARY KEY,
+		id INT PRIMARY KEY AUTO_INCREMENT,
+		code TEXT NOT NULL,
 		description TEXT NOT NULL,
 		assigned_to TEXT,
 		completed BOOLEAN NOT NULL DEFAULT false,

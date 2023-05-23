@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"github.com/Xukay101/code-helper-bot/src/database"
+	"github.com/Xukay101/code-helper-bot/src/models"
 	"github.com/bwmarrin/discordgo"
+	"gorm.io/gorm"
 )
 
 func HandleTasks(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
@@ -31,12 +33,16 @@ func HandleTasks(s *discordgo.Session, m *discordgo.MessageCreate, prefix string
 
 	if args[0] == prefix+"tasks" {
 
+		// Get db
+		conn := database.GetDb()
+
+		// Get flag
 		if len(args) > 1 {
 
 			switch args[1] {
 
 			case "--add":
-				addTask(s, m, args)
+				addTask(s, m, args, conn)
 			default:
 				commandHelp(s, m)
 
@@ -60,67 +66,52 @@ func commandHelp(s *discordgo.Session, m *discordgo.MessageCreate) {
 	s.ChannelMessageSendEmbedReply(m.ChannelID, embed, m.Reference())
 }
 
-func addTask(s *discordgo.Session, m *discordgo.MessageCreate, args []string) {
+func addTask(s *discordgo.Session, m *discordgo.MessageCreate, args []string, conn *gorm.DB) {
 	// addTask handles the "--add" subcommand of the "tasks" command
 	if len(args) < 3 {
 		commandHelp(s, m)
 		return
 	}
 
-	conn, err := database.GetDb()
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	defer conn.Close()
+	// generate random identification that is not repeated
+	generateRandomCode := func(serverId string) string {
+		// get only the code of the tasks in the server
+		var tasks []models.Task
+		conn.Select("Code").Where("server_id = ?", serverId).Find(&tasks)
 
-	generateRandomID := func() string {
-		// generate random identification that is not repeated
-		rows, err := conn.Query("SELECT id FROM tasks WHERE server_id = ?", m.GuildID)
-		if err != nil {
-			log.Println(err)
-			return ""
-		}
-		defer rows.Close()
-
-		existingIDs := make(map[int]bool)
-
-		for rows.Next() {
-			var id int
-			err := rows.Scan(&id)
-			if err != nil {
-				log.Println(err)
-				return ""
-			}
-			existingIDs[id] = true
+		codes := make(map[string]bool)
+		for _, task := range tasks {
+			fmt.Println(task.Code)
+			codes[task.Code] = true
 		}
 
-		var id int
+		var code string
 		for {
-			id = rand.Intn(90000000) + 10000000
-			if !existingIDs[id] {
+			code = fmt.Sprintf("%08d", rand.Intn(90000000)+10000000)
+			if !codes[code] {
 				break
 			}
 		}
 
-		return fmt.Sprintf("%08d", id)
+		return code
 	}
 
-	qry := "INSERT INTO tasks (id, description, created_by, server_id) VALUES (?, ?, ?, ?)"
-	id := generateRandomID()
-	if id == "" {
-		return
-	}
+	// get fields
 	description := strings.SplitN(m.Content, " ", 3)[2]
 	createdBy := m.Author.ID
 	serverId := m.GuildID
+	code := generateRandomCode(serverId)
 
-	_, err = conn.Exec(qry, id, description, createdBy, serverId)
-	if err != nil {
-		log.Println(err)
-		return
+	// create new task
+	task := models.Task{
+		Code:        code,
+		Description: description,
+		CreatedBy:   createdBy,
+		ServerId:    serverId,
+	}
+
+	result := conn.Create(&task)
+	if result.Error != nil {
+		log.Println(result.Error)
 	}
 }
-
-// func addTask(s *discordgo.Session, m *discordgo.MessageCreate, args []string) {
-// }
