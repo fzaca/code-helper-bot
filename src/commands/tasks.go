@@ -18,13 +18,13 @@ func HandleTasks(s *discordgo.Session, m *discordgo.MessageCreate, prefix string
 
 		flags:
 			--add [task] // Add global task
-			--delete [id-task] // Delete global task
+			--info [id-task] // Return with task information
 			--list (optional)[user] // return global list of tasks or list of user
+			--delete [id-task] // Delete global task
 			--edit [id-task] [task] // Edit global task
 			--assign [id-task] (optional)[user] // Assign task to a user
 			--unassign [id-task] // Unassign task
 			--done [id-task] // Complete task
-			--info [id-task] // Return with task information
 	*/
 
 	// Send message with `embed` use `ChannelMessageSendEmbed`
@@ -43,6 +43,8 @@ func HandleTasks(s *discordgo.Session, m *discordgo.MessageCreate, prefix string
 
 			case "--add":
 				addTask(s, m, args, conn)
+			case "--info":
+				getInfo(s, m, args, conn)
 			default:
 				commandHelp(s, m)
 
@@ -67,21 +69,20 @@ func commandHelp(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func addTask(s *discordgo.Session, m *discordgo.MessageCreate, args []string, conn *gorm.DB) {
-	// addTask handles the "--add" subcommand of the "tasks" command
+	// AddTask handles the "--add" subcommand of the "tasks" command
 	if len(args) < 3 {
 		commandHelp(s, m)
 		return
 	}
 
-	// generate random identification that is not repeated
+	// Generate random identification that is not repeated
 	generateRandomCode := func(serverId string) string {
-		// get only the code of the tasks in the server
+		// Get only the code of the tasks in the server
 		var tasks []models.Task
 		conn.Select("Code").Where("server_id = ?", serverId).Find(&tasks)
 
 		codes := make(map[string]bool)
 		for _, task := range tasks {
-			fmt.Println(task.Code)
 			codes[task.Code] = true
 		}
 
@@ -96,13 +97,13 @@ func addTask(s *discordgo.Session, m *discordgo.MessageCreate, args []string, co
 		return code
 	}
 
-	// get fields
+	// Get fields
 	description := strings.SplitN(m.Content, " ", 3)[2]
 	createdBy := m.Author.ID
 	serverId := m.GuildID
 	code := generateRandomCode(serverId)
 
-	// create new task
+	// Create new task
 	task := models.Task{
 		Code:        code,
 		Description: description,
@@ -110,8 +111,68 @@ func addTask(s *discordgo.Session, m *discordgo.MessageCreate, args []string, co
 		ServerId:    serverId,
 	}
 
-	result := conn.Create(&task)
-	if result.Error != nil {
-		log.Println(result.Error)
+	err := conn.Create(&task).Error
+	if err != nil {
+		log.Println(err)
 	}
+}
+
+func getInfo(s *discordgo.Session, m *discordgo.MessageCreate, args []string, conn *gorm.DB) {
+	// Check args
+	if len(args) < 3 {
+		commandHelp(s, m)
+		return
+	}
+
+	// Get task
+	var task models.Task
+
+	err := conn.Where("server_id = ?", m.GuildID).First(&task, "code = ?", args[2]).Error
+	if err != nil {
+		return // Gorm generated log automatic
+	}
+
+	// Get users and format fields
+	emptyUser := &discordgo.User{
+		Username: " ",
+	}
+	assignedTo, err := s.User(task.AssignedTo)
+	if err != nil {
+		assignedTo = emptyUser
+	}
+	createdBy, err := s.User(task.CreatedBy)
+	if err != nil {
+		createdBy = emptyUser
+	}
+	updatedBy, err := s.User(task.UpdatedBy)
+	if err != nil {
+		updatedBy = emptyUser
+	}
+	completed := "No"
+	if task.Completed {
+		completed = "Yes"
+	}
+
+	// Send embed
+	embed := &discordgo.MessageEmbed{
+		Title: fmt.Sprintf("Task %s", task.Code),
+		Description: fmt.Sprintf(`
+			Description: %s 
+			AssignedTo: %s
+			Completed: %v
+			CreatedBy: %s
+			UpdatedBy: %s
+			CreatedAt: %+v
+			UpdatedAt: %+v
+		`,
+			task.Description,
+			assignedTo.Username,
+			completed,
+			createdBy.Username,
+			updatedBy.Username,
+			task.CreatedAt,
+			task.UpdatedAt,
+		),
+	}
+	s.ChannelMessageSendEmbedReply(m.ChannelID, embed, m.Reference())
 }
