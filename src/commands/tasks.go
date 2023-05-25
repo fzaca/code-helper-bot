@@ -45,6 +45,8 @@ func HandleTasks(s *discordgo.Session, m *discordgo.MessageCreate, prefix string
 				addTask(s, m, args, conn)
 			case "--info":
 				getInfo(s, m, args, conn)
+			case "--list":
+				getList(s, m, args, conn)
 			default:
 				commandHelp(s, m)
 
@@ -173,6 +175,43 @@ func getInfo(s *discordgo.Session, m *discordgo.MessageCreate, args []string, co
 			task.CreatedAt,
 			task.UpdatedAt,
 		),
+	}
+	s.ChannelMessageSendEmbedReply(m.ChannelID, embed, m.Reference())
+}
+
+func getList(s *discordgo.Session, m *discordgo.MessageCreate, args []string, conn *gorm.DB) {
+	var tasks []models.Task
+	var message strings.Builder
+
+	if len(args) < 3 {
+		// Return to complete list
+		conn.Select("Code", "Description").Find(&tasks)
+	} else {
+		// Return to @user list (incomplet)
+		conn.Select("Code", "Description").Find(&tasks)
+	}
+
+	// Get list of tasks in string
+	for _, task := range tasks {
+		if len(task.Description) >= 80 {
+			message.WriteString(fmt.Sprintf(
+				"***%s*** %.80s**...**\n",
+				task.Code,
+				task.Description,
+			))
+		} else {
+			message.WriteString(fmt.Sprintf(
+				"***%s*** %s\n",
+				task.Code,
+				task.Description,
+			))
+		}
+	}
+
+	// Send embed
+	embed := &discordgo.MessageEmbed{
+		Title:       "Tasks: ",
+		Description: message.String(),
 	}
 	s.ChannelMessageSendEmbedReply(m.ChannelID, embed, m.Reference())
 }
