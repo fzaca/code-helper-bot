@@ -47,6 +47,10 @@ func HandleTasks(s *discordgo.Session, m *discordgo.MessageCreate, prefix string
 				getInfo(s, m, args, conn)
 			case "--list":
 				getList(s, m, args, conn)
+			case "--delete":
+				delTask(s, m, args, conn)
+			case "--edit":
+				editTask(s, m, args, conn)
 			default:
 				commandHelp(s, m)
 
@@ -188,7 +192,9 @@ func getList(s *discordgo.Session, m *discordgo.MessageCreate, args []string, co
 		conn.Select("Code", "Description").Find(&tasks)
 	} else {
 		// Return to @user list (incomplet)
-		conn.Select("Code", "Description").Find(&tasks)
+		userId := args[2][2 : len(args[2])-1]
+		conn.Select("Code", "Description").Where("assigned_to", userId).Find(&tasks)
+		s.ChannelMessageSend(m.ChannelID, userId)
 	}
 
 	// Get list of tasks in string
@@ -214,4 +220,40 @@ func getList(s *discordgo.Session, m *discordgo.MessageCreate, args []string, co
 		Description: message.String(),
 	}
 	s.ChannelMessageSendEmbedReply(m.ChannelID, embed, m.Reference())
+}
+
+func delTask(s *discordgo.Session, m *discordgo.MessageCreate, args []string, conn *gorm.DB) {
+	if len(args) < 3 {
+		commandHelp(s, m)
+		return
+	}
+
+	code := args[2]
+
+	var tasks []models.Task
+	err := conn.Where("code = ?", code).Delete(&tasks).Error
+	if err != nil {
+		log.Println(err)
+	} else {
+		s.ChannelMessageSend(m.ChannelID, "Task deleted successfully")
+	}
+}
+
+func editTask(s *discordgo.Session, m *discordgo.MessageCreate, args []string, conn *gorm.DB) {
+	if len(args) < 4 {
+		commandHelp(s, m)
+		return
+	}
+
+	var task []models.Task
+	code := args[2]
+	description := strings.SplitN(m.Content, " ", 4)[3]
+
+	err := conn.Where("server_id = ? AND code = ?", m.GuildID, code).First(&task).Error
+	if err != nil {
+		log.Println(err)
+	} else {
+		conn.Model(&task).Update("description", description)
+		s.ChannelMessageSend(m.ChannelID, "Task edit successfully")
+	}
 }
